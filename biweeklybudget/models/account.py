@@ -178,6 +178,15 @@ class Account(Base, ModelAsDict):
     #: Plaid Token for this account
     plaid_token = Column(String(70))
 
+    #: Plaid Account ID for this account
+    plaid_account_id = Column(String(70))
+
+    #: Plaid Account Name for this account
+    plaid_account_name = Column(String(70))
+
+    #: Plaid Account Mask for this account
+    plaid_account_mask = Column(String(70))
+
     def __repr__(self):
         return "<Account(id=%s, name='%s')>" % (
             self.id, self.name

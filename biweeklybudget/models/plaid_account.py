@@ -3,7 +3,7 @@ The latest version of this package is available at:
 <http://github.com/jantman/biweeklybudget>
 
 ################################################################################
-Copyright 2016 Jason Antman <jason@jasonantman.com> <http://www.jasonantman.com>
+Copyright 2020 Jason Antman <jason@jasonantman.com> <http://www.jasonantman.com>
 
     This file is part of biweeklybudget, also known as biweeklybudget.
 
@@ -35,18 +35,53 @@ Jason Antman <jason@jasonantman.com> <http://www.jasonantman.com>
 ################################################################################
 """
 
-from biweeklybudget.models.account import Account, AcctType
-from biweeklybudget.models.account_balance import AccountBalance
-from biweeklybudget.models.budget_model import Budget
-from biweeklybudget.models.budget_transaction import BudgetTransaction
-from biweeklybudget.models.dbsetting import DBSetting
-from biweeklybudget.models.fuel import FuelFill, Vehicle
-from biweeklybudget.models.ofx_statement import OFXStatement
-from biweeklybudget.models.ofx_transaction import OFXTransaction
-from biweeklybudget.models.plaid_account import PlaidAccount
-from biweeklybudget.models.plaid_item import PlaidItem
-from biweeklybudget.models.projects import Project, BoMItem
-from biweeklybudget.models.reconcile_rule import ReconcileRule
-from biweeklybudget.models.scheduled_transaction import ScheduledTransaction
-from biweeklybudget.models.transaction import Transaction
-from biweeklybudget.models.txn_reconcile import TxnReconcile
+import logging
+from sqlalchemy import Column, Integer, String, PrimaryKeyConstraint, ForeignKey
+from sqlalchemy_utc import UtcDateTime
+from sqlalchemy.orm import relationship
+
+from biweeklybudget.models.base import Base, ModelAsDict
+
+logger = logging.getLogger(__name__)
+
+
+class PlaidAccount(Base, ModelAsDict):
+
+    __tablename__ = 'plaid_accounts'
+    __table_args__ = (
+        PrimaryKeyConstraint('plaid_id', 'plaid_item_id'),
+        {'mysql_engine': 'InnoDB'}
+    )
+
+    #: Plaid Account ID - part of composite key
+    plaid_id = Column(String(70), primary_key=True)
+
+    #: Referenced Plaid Item ID - part of composite key
+    plaid_item_id = Column(
+        String(70), ForeignKey('plaid_items.item_id'), nullable=False
+    )
+
+    #: PlaidItem this PlaidAccount is associated with
+    plaid_item = relationship('PlaidItem', uselist=False)
+
+    #: Plaid name for the account
+    name = Column(String(70))
+
+    #: Plaid account number mask for this account
+    mask = Column(String(20))
+
+    #: Account ID this PlaidAccount is associated with
+    account_id = Column(
+        Integer, ForeignKey('accounts.id'), nullable=True, unique=True
+    )
+
+    #: Account this PlaidAccount is associated with
+    account = relationship('Account', uselist=False)
+
+    #: When this item was last updated
+    last_updated = Column(UtcDateTime)
+
+    def __repr__(self):
+        return "<PlaidAccount(plaid_id=%s, name='%s')>" % (
+            self.plaid_id, self.name
+        )

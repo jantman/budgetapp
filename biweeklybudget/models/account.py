@@ -37,11 +37,12 @@ Jason Antman <jason@jasonantman.com> <http://www.jasonantman.com>
 
 import logging
 from sqlalchemy import (
-    Column, Integer, String, Boolean, Text, Enum, Numeric, inspect, or_
+    Column, Integer, String, Boolean, Text, Enum, Numeric, inspect, or_,
+    ForeignKeyConstraint
 )
 from datetime import timedelta
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql.expression import null
 from decimal import Decimal
 
@@ -49,6 +50,7 @@ from biweeklybudget.models.base import Base, ModelAsDict
 from biweeklybudget.models.account_balance import AccountBalance
 from biweeklybudget.models.transaction import Transaction
 from biweeklybudget.models.ofx_transaction import OFXTransaction
+from biweeklybudget.models.plaid_account import PlaidAccount
 from biweeklybudget.utils import dtnow
 from biweeklybudget.prime_rate import PrimeRateCalculator
 import json
@@ -94,6 +96,10 @@ class Account(Base, ModelAsDict):
 
     __tablename__ = 'accounts'
     __table_args__ = (
+        ForeignKeyConstraint(
+            ['plaid_item_id', 'plaid_account_id'],
+            [PlaidAccount.plaid_item_id, PlaidAccount.plaid_id]
+        ),
         {'mysql_engine': 'InnoDB'}
     )
 
@@ -173,7 +179,16 @@ class Account(Base, ModelAsDict):
     re_other_fee = Column(String(254))
 
     #: PlaidAccount this Account is associated with
-    plaid_account = relationship('Account', uselist=False)
+    plaid_account_id = Column(String(70), nullable=True)
+
+    #: Referenced Plaid Item ID - part of composite key
+    plaid_item_id = Column(String(70), nullable=True)
+
+    #: Account this PlaidAccount is associated with
+    plaid_account = relationship(
+        'PlaidAccount', backref=backref('account', uselist=False),
+        foreign_keys=[plaid_account_id, plaid_item_id]
+    )
 
     def __repr__(self):
         return "<Account(id=%s, name='%s')>" % (

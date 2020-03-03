@@ -37,8 +37,8 @@ Jason Antman <jason@jasonantman.com> <http://www.jasonantman.com>
 
 import logging
 from sqlalchemy import Column, Integer, String, PrimaryKeyConstraint, ForeignKey
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy_utc import UtcDateTime
-from sqlalchemy.orm import relationship
 
 from biweeklybudget.models.base import Base, ModelAsDict
 
@@ -54,7 +54,7 @@ class PlaidAccount(Base, ModelAsDict):
     )
 
     #: Plaid Account ID - part of composite key
-    plaid_id = Column(String(70), primary_key=True)
+    plaid_id = Column(String(70), nullable=False)
 
     #: Referenced Plaid Item ID - part of composite key
     plaid_item_id = Column(
@@ -74,9 +74,6 @@ class PlaidAccount(Base, ModelAsDict):
     account_id = Column(
         Integer, ForeignKey('accounts.id'), nullable=True, unique=True
     )
-
-    #: Account this PlaidAccount is associated with
-    account = relationship('Account', uselist=False)
 
     #: When this item was last updated
     last_updated = Column(UtcDateTime)

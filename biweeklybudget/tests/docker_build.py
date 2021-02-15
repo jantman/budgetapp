@@ -104,6 +104,7 @@ RUN set -ex \
         libxslt \
         libxslt-dev \
         tini \
+        git \
     && apk add --no-cache --virtual .build-deps \
         gcc \
         libffi-dev \
